@@ -1766,12 +1766,18 @@ class DocumentParser {
     parseInserted(node, parentParser) {
         return {
             type: DomType.Inserted,
+            id: globalXmlParser.attr(node, "id"),
+            author: globalXmlParser.attr(node, "author"),
+            date: globalXmlParser.attr(node, "date"),
             children: parentParser(node)?.children ?? []
         };
     }
     parseDeleted(node, parentParser) {
         return {
             type: DomType.Deleted,
+            id: globalXmlParser.attr(node, "id"),
+            author: globalXmlParser.attr(node, "author"),
+            date: globalXmlParser.attr(node, "date"),
             children: parentParser(node)?.children ?? []
         };
     }
@@ -3625,14 +3631,28 @@ section.${c}>footer { z-index: 1; }
         return elem.break == "textWrapping" ? this.h({ tagName: "br" }) : null;
     }
     renderInserted(elem) {
-        if (this.options.renderChanges)
-            return this.renderContainer(elem, "ins");
+        if (this.options.renderChanges) {
+            const result = this.renderContainer(elem, "ins");
+            this.renderChangeMetadata(result, elem);
+            return result;
+        }
         return this.renderElements(elem.children);
     }
     renderDeleted(elem) {
-        if (this.options.renderChanges)
-            return this.renderContainer(elem, "del");
+        if (this.options.renderChanges) {
+            const result = this.renderContainer(elem, "del");
+            this.renderChangeMetadata(result, elem);
+            return result;
+        }
         return null;
+    }
+    renderChangeMetadata(result, elem) {
+        if (elem.author)
+            result.setAttribute("data-change-author", elem.author);
+        if (elem.date)
+            result.setAttribute("data-change-date", elem.date);
+        if (elem.id)
+            result.setAttribute("data-change-id", elem.id);
     }
     renderSymbol(elem) {
         return this.h({ tagName: "span", children: [String.fromCharCode(elem.char)], style: { fontFamily: elem.font } });
